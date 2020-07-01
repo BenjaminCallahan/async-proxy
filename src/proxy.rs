@@ -3,10 +3,10 @@ use crate::IOStream;
 /// General trait which implementing type
 /// represents an asyncronous proxy client (stream)
 #[async_trait::async_trait]
-pub trait ProxyStream<S>: IOStream
-where
-    S: IOStream
-{
+pub trait ProxyStream {
+    /// Represents a stream that the proxy
+    /// client operates on (sends protocol data over it)
+    type Stream: IOStream;
     /// Used for internal proxy error indication
     type ErrorKind;
     /// Parameters that are passed to the
@@ -27,7 +27,7 @@ where
     /// establishes on it connection.
     /// Returns a `ProxyStream` if the connection
     /// was successful, an error if not.
-    async fn connect(stream: S, params: Self::ConnParams)
+    async fn connect(stream: Self::Stream, params: Self::ConnParams)
         -> Result<Self, Self::ErrorKind>
     where
         Self: Sized;
