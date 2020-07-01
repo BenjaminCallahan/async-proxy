@@ -1,4 +1,10 @@
+use tokio::io::{AsyncRead, AsyncWrite};
 use std::time::Duration;
+
+/// General trait which implementing type
+/// represents something where we can both
+/// write to or read from
+pub trait IOStream: AsyncRead + AsyncWrite {}
 
 /// Just a structure containing 
 /// connecting/read/write timeouts

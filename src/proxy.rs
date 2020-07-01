@@ -1,4 +1,4 @@
-use crate::IOStream;
+use crate::general::IOStream;
 
 /// General trait which implementing type
 /// represents an asyncronous proxy client (stream)
