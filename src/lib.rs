@@ -4,6 +4,8 @@
 //! as well as asyncronous implementation of proxy clients
 //! and proxy-related utilities.
 
+use tokio::io::{AsyncRead, AsyncWrite};
+
 /// Module responsible for functionality
 /// related to proxy clients interfaces
 /// (eg. common definitions and traits)
@@ -14,3 +16,8 @@ pub mod proxy;
 /// protocols, such as Socks4/5, HTTP(s)
 /// proxies
 pub mod clients;
+
+/// General trait which implementing type
+/// represents something where we can both
+/// write to or read from
+pub trait IOStream: AsyncRead + AsyncWrite {}

@@ -1,9 +1,4 @@
-use tokio::io::{AsyncRead, AsyncWrite};
-
-/// General trait which implementing type
-/// represents something where we can both
-/// write to or read from
-pub trait IOStream: AsyncRead + AsyncWrite {}
+use crate::IOStream;
 
 /// General trait which implementing type
 /// represents an asyncronous proxy client (stream)
