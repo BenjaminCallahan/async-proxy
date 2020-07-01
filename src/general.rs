@@ -4,7 +4,14 @@ use std::time::Duration;
 /// General trait which implementing type
 /// represents something where we can both
 /// write to or read from
-pub trait IOStream: AsyncRead + AsyncWrite {}
+pub trait IOStream: AsyncRead + AsyncWrite + Unpin {}
+
+/// Auto-impl for types that satisfies
+/// the trait `IOStream` requirements
+/// (`AsyncRead` and `AsyncWrite`)
+impl<T> IOStream for T
+where
+    T: AsyncRead + AsyncWrite + Unpin {}
 
 /// Just a structure containing 
 /// connecting/read/write timeouts
