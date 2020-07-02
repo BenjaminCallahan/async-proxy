@@ -9,3 +9,12 @@ async-trait = "0.1"
 
 [dependencies.tokio]
 version = "0.2"
+features = ["tcp", "io-util", "time"]
+
+[dev-dependencies]
+clap = "2.33.1"
+ansi_term = "0.12.1"
+
+[dev-dependencies.tokio]
+version = "0.2"
+features = ["macros"]
