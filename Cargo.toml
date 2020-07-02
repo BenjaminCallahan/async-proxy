@@ -3,6 +3,9 @@ name = "async-proxy"
 version = "0.1.0"
 authors = ["TonyGraim <tonygraim@gmail.com>"]
 edition = "2018"
+description = "An asyncronous implementation of proxy clients"
+license = "MIT"
+repository = "https://github.com/TonyGraim/async-proxy"
 
 [dependencies]
 async-trait = "0.1"
