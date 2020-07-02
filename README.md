@@ -13,7 +13,7 @@ async-proxy = "0.1.0"
 
 ## Protocols
 Since it is the first stable version of the library (it has been created yesterday, lol), currently the only supported protocol is the `Socks4` proxification protocol.
-We are working on these protocols, and, we hope, they will be released in the nearest few days
+We are working on these protocols, and, we hope, they will be released in the coming days
 * SOCKS4 (Stable)
 * SOCKS5 (Working on, WIP)
 * HTTP(s) (Working on, WIP)
