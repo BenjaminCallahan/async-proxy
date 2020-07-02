@@ -139,15 +139,14 @@ async fn main() {
     // `server_addr`
     let server_socket_addr: SocketAddr = server_addr.parse().unwrap();
 
-    // Connecting to the stream and getting the readable and
-    // writable stream, or terminating the script if it is
-    // unable to connect
-    let stream = match TcpStream::connect(server_socket_addr).await {
-        Ok(stream) => stream,
-        Err(_) => {
-            message!(Fatal, "Unable to connect to the proxy server `{}`", server_addr);
-        }
-    };
+    // Connecting to the stream with timeout set to 8 and
+    // getting the readable and writable stream, or
+    // terminating the script if it is unable to connect
+    let future = TcpStream::connect(server_socket_addr);
+    let future = timeout(Duration::from_secs(8), future);
+    let stream = future.await
+                        .fatal("Timeout of 8 seconds reached")
+                        .fatal("Unable to connect to the proxy server");
 
     // Printing out information that we are starting
     // a connection to the service through the proxy client
@@ -166,8 +165,8 @@ async fn main() {
     };
 
     // Getting a message that will be sent to the service
-    println!("Please inter a message to be sent.");
-    print!("{} ", Color::White.bold().paint("Message:"));
+    println!("Please inter a message to be sent. {}", 
+             Color::White.bold().paint("Message:"));
 
     let mut input = String::new();
     std::io::stdin().read_line(&mut input)
