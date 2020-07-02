@@ -1,7 +1,7 @@
 # async-proxy: fast proxy clients implementation
 Async proxy is a fast and flexible, as well as asyncronous implementation of proxy clients in the Rust programming language
 
-![crates.io](https://img.shields.io/crates/v/embedded-hal-mock.svg)
+![crates.io](https://img.shields.io/crates/v/async-proxy.svg)
 ![License](https://img.shields.io/github/license/TonyGraim/async-proxy)
 ![Version](https://img.shields.io/badge/version-v0.1.0-blue)
 
@@ -74,9 +74,9 @@ async fn main() {
     // for Socks4 proxy client
     let connection_params = ConnParams::new(dest_addr, timeouts);
 
-    // Connecting to the stream and getting the readable and
-    // writable stream, or terminating the script if it is
-    // unable to connect
+    // `Socks4NoIdent` performs operations on
+    // an existant stream, so we need to connect
+    // to the proxy server by ourselves
     let stream = TcpStream::connect(proxy_addr)
                            .await
                            .expect("Unable to connect to the proxy server");
