@@ -187,6 +187,7 @@ async fn main() {
     future.await.fatal("Timeout of 8 seconds reached")
                 .fatal("Unable to receive a string from the service");
 
+    // Successfully received a message.
+    // Printing it out
     message!(Success, "Received message from the service: {}", input);
-    
 }
