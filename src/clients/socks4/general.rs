@@ -1,5 +1,6 @@
 use crate::general::ConnectionTimeouts;
 use crate::proxy::ProxyStream;
+use crate::clients::socks4::Command;
 use tokio::net::TcpStream;
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -29,13 +30,6 @@ pub enum ErrorKind {
     IdentIsUnavailable,
     BadIdent,
     OperationTimeoutReached
-}
-
-/// Represents a Socks4 protocol command
-#[repr(u8)]
-pub enum Command {
-    TcpConnectionEstablishment = 1,
-    TcpPortBinding
 }
 
 /// Parameters required by this Socks4

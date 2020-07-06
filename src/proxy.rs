@@ -1,12 +1,10 @@
-use crate::general::IOStream;
-
 /// General trait which implementing type
 /// represents an asyncronous proxy client (stream)
 #[async_trait::async_trait]
 pub trait ProxyStream {
     /// Represents a stream that the proxy
     /// client operates on (sends protocol data over it)
-    type Stream: IOStream;
+    type Stream: Send;
     /// Used for internal proxy error indication
     type ErrorKind;
     /// Parameters that are passed to the

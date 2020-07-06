@@ -5,3 +5,10 @@ pub mod general;
 /// without ident being passed when establishing
 /// connection
 pub mod no_ident;
+
+/// Represents a Socks4 protocol command
+#[repr(u8)]
+pub enum Command {
+    TcpConnectionEstablishment = 1,
+    TcpPortBinding
+}

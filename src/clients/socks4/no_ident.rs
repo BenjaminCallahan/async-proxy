@@ -1,5 +1,6 @@
 use crate::general::ConnectionTimeouts;
 use crate::clients::socks4::general::ErrorKind;
+use crate::clients::socks4::Command;
 use crate::proxy::ProxyStream;
 use tokio::net::TcpStream;
 use tokio::io::{AsyncRead, AsyncWrite};
@@ -15,13 +16,6 @@ use std::io;
 /// Contains a tcp stream that operates on
 pub struct Socks4NoIdent {
     wrapped_stream: TcpStream
-}
-
-/// Represents a Socks4 protocol command
-#[repr(u8)]
-pub enum Command {
-    TcpConnectionEstablishment = 1,
-    TcpPortBinding
 }
 
 /// Parameters required by this Socks4
