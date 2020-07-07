@@ -1,8 +1,6 @@
-use async_proxy::clients::socks4::no_ident::{
-    Socks4NoIdent, ConnParams
-};
+use async_proxy::clients::socks4::no_ident::Socks4NoIdent;
 use async_proxy::general::ConnectionTimeouts;
-use async_proxy::proxy::ProxyStream;
+use async_proxy::proxy::ProxyConstructor;
 use tokio::net::TcpStream;
 use tokio::time::timeout;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -47,9 +45,10 @@ async fn main() {
     // The full `SocketAddrV4` destination service address representation
     let dest_addr: SocketAddrV4 = SocketAddrV4::new(dest_ipaddr, dest_port);
 
-    // Creating required connection parameters
-    // for Socks4 proxy client
-    let connection_params = ConnParams::new(dest_addr, timeouts);
+    // Creating the socks4 constructor,
+    // using which we will establish a connection
+    // through proxy
+    let socks4_proxy = Socks4NoIdent::new(dest_addr, timeouts);
 
     // Printing out information that we are starting
     // a connection to the Socks4 proxy server
@@ -69,7 +68,7 @@ async fn main() {
               dest_addr, proxy_addr);
 
     // Connecting to the service through proxy
-    let mut stream = match Socks4NoIdent::connect(stream, connection_params).await {
+    let mut stream = match socks4_proxy.connect(stream).await {
         Ok(stream) => {
             println!("Successfully connected to the service through the proxy");
             stream

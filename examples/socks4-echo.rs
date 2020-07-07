@@ -1,9 +1,7 @@
 use clap::{Arg, App};
-use async_proxy::clients::socks4::general::{
-    Socks4General, ConnParams
-};
+use async_proxy::clients::socks4::general::Socks4General;
 use async_proxy::general::ConnectionTimeouts;
-use async_proxy::proxy::ProxyStream;
+use async_proxy::proxy::ProxyConstructor;
 use tokio::net::TcpStream;
 use tokio::time::timeout;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -125,11 +123,12 @@ async fn main() {
     // Shadowing ident value and converting it to a `Cow`
     let ident = std::borrow::Cow::Owned(ident.to_owned());
     
-    // Creating required connection parameters
-    // for Socks4 proxy client
-    let connection_params = ConnParams::new(destination.parse().unwrap(),
-                                            ident,
-                                            timeouts);
+    // Creating the socks4 constructor,
+    // using which we will establish a connection
+    // through proxy
+    let socks4_proxy = Socks4General::new(destination.parse().unwrap(),
+                                          ident,
+                                          timeouts);
 
     // Printing out information that we are starting
     // a connection to the Socks4 proxy server
@@ -154,7 +153,7 @@ async fn main() {
              destination, server_addr);
 
     // Connecting to the service through proxy
-    let mut stream = match Socks4General::connect(stream, connection_params).await {
+    let mut stream = match socks4_proxy.connect(stream).await {
         Ok(stream) => {
             message!(Success, "Successfully connected to the service through the proxy");
             stream

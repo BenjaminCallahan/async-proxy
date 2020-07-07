@@ -1,32 +1,24 @@
-/// General trait which implementing type
-/// represents an asyncronous proxy client (stream)
+/// A general trait that represents
+/// something that constructs a proxy stream,
+/// something, where we can write to and read from
+/// just as from a usual stream but through a proxy
 #[async_trait::async_trait]
-pub trait ProxyStream {
+pub trait ProxyConstructor {
     /// Represents a stream that the proxy
     /// client operates on (sends protocol data over it)
     type Stream: Send;
+    /// Represents the actual proxy stream,
+    /// returned by the connect function
+    type ProxyStream: Send;
     /// Used for internal proxy error indication
     type ErrorKind;
-    /// Parameters that are passed to the
-    /// connect function.
-    /// 
-    /// Each proxification protocol requires
-    /// own parameters in a client implementation,
-    /// so the implementing type must annotate it.
-    /// 
-    /// For instance, a Socks4 protocol implementation
-    /// may require (if it is flexible it will actually
-    ///  require) destanation IPv4 address and port,
-    /// while an HTTP(s) protocol implementation may
-    /// require you a destanation URI
-    type ConnParams;
 
-    /// Takes ownership of an existant stream and
-    /// establishes on it connection.
-    /// Returns a `ProxyStream` if the connection
-    /// was successful, an error if not.
-    async fn connect(stream: Self::Stream, params: Self::ConnParams)
-        -> Result<Self, Self::ErrorKind>
+    /// Takes ownership of an existant stream,
+    /// establishes a proxixied connection on the stream
+    /// and returns the proxy stream if the connection was
+    /// successful, unless an error
+    async fn connect(self, stream: Self::Stream)
+        -> Result<Self::ProxyStream, Self::ErrorKind>
     where
         Self: Sized;
 }

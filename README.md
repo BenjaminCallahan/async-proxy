@@ -24,30 +24,29 @@ We are working on these protocols, and, we hope, they will be released in the co
 An example of using an async-proxy `Socks4` protocol implementation without `ident` in connection needed
 
 ```rust
-use async_proxy::clients::socks4::no_ident::{
-    Socks4NoIdent, ConnParams
-};
+use async_proxy::clients::socks4::no_ident::Socks4NoIdent;
 use async_proxy::general::ConnectionTimeouts;
-use async_proxy::proxy::ProxyStream;
+use async_proxy::proxy::ProxyConstructor;
 use tokio::net::TcpStream;
 use std::net::{
     SocketAddr, SocketAddrV4,
     IpAddr, Ipv4Addr
 };
 use std::time::Duration;
+use std::process::exit;
 
 #[tokio::main]
 async fn main() {
     // The address of the proxy server that
     // will be used to connect through.
     // (We used a random proxy from `https://hidemy.name/en/proxy-list/`)
-    const PROXY_IPADDR: Ipv4Addr = Ipv4Addr::new(104, 248, 63, 15);
+    let proxy_ipaddr: Ipv4Addr = Ipv4Addr::new(104, 248, 63, 15);
 
     // The port of the proxy server
-    const PROXY_PORT: u16 = 30_588;
+    let proxy_port: u16 = 30_588;
 
     // The full `SocketAddr` proxy server address representation
-    let proxy_addr: SocketAddr = SocketAddr::new(IpAddr::V4(PROXY_IPADDR), PROXY_PORT);
+    let proxy_addr: SocketAddr = SocketAddr::new(IpAddr::V4(proxy_ipaddr), proxy_port);
 
     // Setting up timeouts
     let timeouts = ConnectionTimeouts::new(
@@ -62,40 +61,38 @@ async fn main() {
     // The address of the destination service
     // that we will be connecting to through proxy.
     // (We used a tcp echo server from `http://tcpbin.org/`)
-    const DEST_IPADDR: Ipv4Addr = Ipv4Addr::new(52, 20, 16, 20);
+    let dest_ipaddr: Ipv4Addr = Ipv4Addr::new(52, 20, 16, 20);
 
     // The port of the destination service
-    let DEST_PORT: u16 = 30_000;
+    let dest_port: u16 = 30_000;
 
     // The full `SocketAddrV4` destination service address representation
-    let dest_addr: SocketAddrV4 = SocketAddrV4::new(DEST_IPADDR, DEST_PORT);
+    let dest_addr: SocketAddrV4 = SocketAddrV4::new(dest_ipaddr, dest_port);
 
-    // Creating required connection parameters
-    // for Socks4 proxy client
-    let connection_params = ConnParams::new(dest_addr, timeouts);
+    // Creating the socks4 constructor,
+    // using which we will establish a connection
+    // through proxy
+    let socks4_proxy = Socks4NoIdent::new(dest_addr, timeouts);
 
-    // `Socks4NoIdent` performs operations on
-    // an existant stream, so we need to connect
-    // to the proxy server by ourselves
+    // Connecting to the stream and getting the readable and
+    // writable stream, or terminating the script if it is
+    // unable to connect
     let stream = TcpStream::connect(proxy_addr)
                            .await
                            .expect("Unable to connect to the proxy server");
 
-    // Connecting to the service through proxy.
-    // If connection succeed, `Socks4NoIdent::connect` returns
-    // both a readable and writeable stream that you will
-    // be working on as on a normal tcp connection stream
-    let stream = match Socks4NoIdent::connect(stream, connection_params).await {
-        Ok(stream) => stream /* Successfully connected to the service*/,
-        Err(error) => {
-            /* Connection error */
-            // -- snip -- //
+    // Connecting to the service through proxy
+    let mut stream = match socks4_proxy.connect(stream).await {
+        Ok(stream) => stream,
+        Err(e) => {
+            // -- unable to connect to the service -- //
+            // -- handling the error -- //
+            exit(1);
         }
     };
 
-    // -- using stream --
+    // -- using `stream` -- //
 }
-
 ```
 
 More examples can be found [here](https://github.com/TonyGraim/async-proxy/tree/develop/examples)

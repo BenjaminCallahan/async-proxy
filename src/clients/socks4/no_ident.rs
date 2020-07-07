@@ -1,7 +1,7 @@
 use crate::general::ConnectionTimeouts;
 use crate::clients::socks4::general::ErrorKind;
 use crate::clients::socks4::Command;
-use crate::proxy::ProxyStream;
+use crate::proxy::ProxyConstructor;
 use tokio::net::TcpStream;
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -11,16 +11,9 @@ use core::task::{Poll, Context};
 use std::net::SocketAddrV4;
 use std::io;
 
-/// The actual type that represents
-/// the Socks4 proxy client with no ident required.
-/// Contains a tcp stream that operates on
-pub struct Socks4NoIdent {
-    wrapped_stream: TcpStream
-}
-
 /// Parameters required by this Socks4
 /// proxy client protocol implementation
-pub struct ConnParams {
+pub struct Socks4NoIdent {
     /// the IPv4 address of a service
     /// we are connecting through proxy
     dest_addr: SocketAddrV4,
@@ -28,22 +21,31 @@ pub struct ConnParams {
     timeouts: ConnectionTimeouts
 }
 
-impl ConnParams {
+/// The actual type that represents
+/// the Socks4 proxy client with no ident required.
+/// Contains a tcp stream that operates on
+pub struct S4NoIdentStream {
+    /// The tcp stream on which
+    /// the client operates on
+    wrapped_stream: TcpStream
+}
+
+impl Socks4NoIdent {
     pub fn new(dest_addr: SocketAddrV4, timeouts: ConnectionTimeouts)
-        -> ConnParams
+        -> Socks4NoIdent
     {
-        ConnParams { dest_addr, timeouts }
+        Socks4NoIdent { dest_addr, timeouts }
     }
 }
 
 #[async_trait::async_trait]
-impl ProxyStream for Socks4NoIdent {
+impl ProxyConstructor for Socks4NoIdent {
+    type ProxyStream = S4NoIdentStream;
     type Stream = TcpStream;
     type ErrorKind = ErrorKind;
-    type ConnParams = ConnParams;
 
-    async fn connect(mut stream: Self::Stream, params: Self::ConnParams)
-        -> Result<Self, Self::ErrorKind>
+    async fn connect(self, mut stream: Self::Stream)
+        -> Result<Self::ProxyStream, Self::ErrorKind>
     {
         // Computing the Socks4 buffer length.
         // The buffer length is computed this way:
@@ -65,13 +67,13 @@ impl ProxyStream for Socks4NoIdent {
         buf.push(Command::TcpConnectionEstablishment as u8);
         
         // Converting the given service port into bytes
-        let port_in_bytes = params.dest_addr.port().to_be_bytes();
+        let port_in_bytes = self.dest_addr.port().to_be_bytes();
         // Pushing the port represented as bytes
         buf.extend_from_slice(&port_in_bytes[..]);
 
         // Converting the given service IPv4 address
         // into bytes
-        let ipaddr_in_bytes = params.dest_addr.ip().octets();
+        let ipaddr_in_bytes = self.dest_addr.ip().octets();
         // Pushing the byte representation of the
         // IPv4 address
         buf.extend_from_slice(&ipaddr_in_bytes[..]);
@@ -83,13 +85,13 @@ impl ProxyStream for Socks4NoIdent {
         // Sending our generated payload
         // to the Socks4 server
         let future = stream.write_all(&buf);
-        let future = timeout(params.timeouts.write_timeout, future);
+        let future = timeout(self.timeouts.write_timeout, future);
         let _ = future.await.map_err(|_| ErrorKind::OperationTimeoutReached)?
                             .map_err(|e| ErrorKind::IOError(e))?;
 
         // Reading a reply from the server
         let future = stream.read(&mut buf);
-        let future = timeout(params.timeouts.read_timeout, future);
+        let future = timeout(self.timeouts.read_timeout, future);
         let read_bytes = future.await.map_err(|_| ErrorKind::OperationTimeoutReached)?
                                       .map_err(|e| ErrorKind::IOError(e))?;
 
@@ -105,7 +107,7 @@ impl ProxyStream for Socks4NoIdent {
         // instance if everything was successful
         match buf[1] {
             // Means that request accepted
-            0x5a => Ok(Socks4NoIdent { wrapped_stream: stream }),
+            0x5a => Ok(S4NoIdentStream { wrapped_stream: stream }),
             // Means that our request was denied
             0x5b => Err(ErrorKind::RequestDenied),
             // Means that ident is currently unavailable
@@ -119,7 +121,7 @@ impl ProxyStream for Socks4NoIdent {
     }
 }
 
-impl AsyncRead for Socks4NoIdent {
+impl AsyncRead for S4NoIdentStream {
     fn poll_read(self: Pin<&mut Self>, cx: &mut Context<'_>, buf: &mut [u8])
         -> Poll<io::Result<usize>>
     {
@@ -128,7 +130,7 @@ impl AsyncRead for Socks4NoIdent {
     }
 }
 
-impl AsyncWrite for Socks4NoIdent {
+impl AsyncWrite for S4NoIdentStream {
     fn poll_write(self: Pin<&mut Self>, cx: &mut Context<'_>, buf: &[u8])
         -> Poll<Result<usize, io::Error>>
     { 
