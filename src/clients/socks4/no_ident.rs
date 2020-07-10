@@ -2,6 +2,7 @@ use crate::general::ConnectionTimeouts;
 use crate::clients::socks4::general::ErrorKind;
 use crate::clients::socks4::Command;
 use crate::proxy::ProxyConstructor;
+use byteorder::{ByteOrder, BigEndian};
 use tokio::net::TcpStream;
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -66,17 +67,25 @@ impl ProxyConstructor for Socks4NoIdent {
         // Pusing the tcp connection establishment command
         buf.push(Command::TcpConnectionEstablishment as u8);
         
-        // Converting the given service port into bytes
-        let port_in_bytes = self.dest_addr.port().to_be_bytes();
-        // Pushing the port represented as bytes
-        buf.extend_from_slice(&port_in_bytes[..]);
+        // Filling the port buffer with zeroes
+        // due to that fact that it is permitted
+        // to access an initialized memory
+        buf.push(0);
+        buf.push(0);
 
-        // Converting the given service IPv4 address
-        // into bytes
-        let ipaddr_in_bytes = self.dest_addr.ip().octets();
-        // Pushing the byte representation of the
-        // IPv4 address
-        buf.extend_from_slice(&ipaddr_in_bytes[..]);
+        // Writing the port to the buffer
+        BigEndian::write_u16(&mut buf[2..4], self.dest_addr.port());
+
+        // Filling the IPv4 buffer with zeroes
+        // due to that fact that it is permitted
+        // to access an initialized memory
+        buf.push(0);
+        buf.push(0);
+        buf.push(0);
+        buf.push(0);
+
+        // Writing the IPv4 address to the buffer
+        BigEndian::write_u32(&mut buf[4..8], (*self.dest_addr.ip()).into());
 
         // And, finally, pushing the
         // NULL-termination (0x00) byte

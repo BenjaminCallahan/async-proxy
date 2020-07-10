@@ -9,6 +9,7 @@ repository = "https://github.com/TonyGraim/async-proxy"
 
 [dependencies]
 async-trait = "0.1"
+byteorder = "1.3.4"
 
 [dependencies.tokio]
 version = "0.2"
