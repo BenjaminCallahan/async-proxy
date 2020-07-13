@@ -61,39 +61,16 @@ async fn main() {
               dest_ipaddr, DEST_PORT, proxy_addr);
 
     // Connecting to the service through proxy
-    let mut stream = match socks5_proxy.connect(stream).await {
+    let stream = match socks5_proxy.connect(stream).await {
         Ok(stream) => {
-            println!("Successfully connected to the service through the proxy");
+            // Successfully connected to the service
             stream
         },
         Err(e) => {
-            println!("Cannot connect to the service: {}", e);
+            // -- handling error -- //
             exit(1);
         }
     };
-
-    // Getting a message that will be sent to the service
-    println!("Please inter a message to be sent. Message: ");
-
-    let mut input = String::new();
-    std::io::stdin().read_line(&mut input)
-                    .expect("Unable to read a line from stdin");
-
-    // Sending the message to the service
-    // with the timeout of 8 seconds
-    let future = stream.write_all(input.as_bytes());
-    let future = timeout(Duration::from_secs(8), future);
-    future.await.expect("Timeout of 8 seconds reached")
-                .expect("Unable to send the message");
-
-    // Receiving a message from the service
-    // with the timeout of 8 seconds
-    let future = stream.read_to_string(&mut input);
-    let future = timeout(Duration::from_secs(8), future);
-    future.await.expect("Timeout of 8 seconds reached")
-                .expect("Unable to receive a string from the service");
-
-    // Successfully received a message.
-    // Printing it out
-    println!("Received message from the service: {}", input);
+    
+    // -- using `stream` -- //
 }
