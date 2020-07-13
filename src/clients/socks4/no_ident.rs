@@ -1,6 +1,5 @@
 use crate::general::ConnectionTimeouts;
-use crate::clients::socks4::general::ErrorKind;
-use crate::clients::socks4::Command;
+use crate::clients::socks4::{ErrorKind, Command};
 use crate::proxy::ProxyConstructor;
 use byteorder::{ByteOrder, BigEndian};
 use tokio::net::TcpStream;

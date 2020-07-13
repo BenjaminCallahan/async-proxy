@@ -1,6 +1,6 @@
 use crate::general::ConnectionTimeouts;
 use crate::proxy::ProxyConstructor;
-use crate::clients::socks4::Command;
+use crate::clients::socks4::{ErrorKind, Command};
 use byteorder::{ByteOrder, BigEndian};
 use tokio::net::TcpStream;
 use tokio::io::{AsyncRead, AsyncWrite};
@@ -10,7 +10,6 @@ use std::pin::Pin;
 use core::task::{Poll, Context};
 use std::net::SocketAddrV4;
 use std::borrow::Cow;
-use std::fmt;
 use std::io;
 
 /// Represents the proxy constructor
@@ -34,34 +33,6 @@ pub struct S4GeneralStream {
     /// The tcp stream on which
     /// the client operates on
     wrapped_stream: TcpStream
-}
-
-/// Represents a Socks4 protocol error
-/// that can occur when connecting to
-/// a destination
-pub enum ErrorKind {
-    ConnectionFailed,
-    IOError(std::io::Error),
-    BadBuffer,
-    RequestDenied,
-    IdentIsUnavailable,
-    BadIdent,
-    OperationTimeoutReached
-}
-
-impl fmt::Display for ErrorKind {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        match self {
-            ErrorKind::ConnectionFailed => f.write_str("connection failed"),
-            ErrorKind::IOError(e) 
-                => f.write_str(&format!("I/O error: {}", e)),
-            ErrorKind::BadBuffer => f.write_str("bad buffer has been received"),
-            ErrorKind::RequestDenied => f.write_str("request denied"),
-            ErrorKind::IdentIsUnavailable => f.write_str("ident is unavailable"),
-            ErrorKind::BadIdent => f.write_str("bad ident"),
-            ErrorKind::OperationTimeoutReached => f.write_str("operation timeout reached")
-        }
-    }
 }
 
 impl Socks4General {

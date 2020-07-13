@@ -11,6 +11,7 @@ but NOW, since we have only one method `connect` in the trait `ProxyStream`, it 
 and separate a stream building job on a trait `ProxyConstructor` (it is the `ProxyStream` trait, but without `ConnParams` and 
 serves for a proxy stream buildig which was used as `ProxyStream`. In future we may back to the former design if we will have
 more than one method or other reasons for it.
+ - Add Socks5 proxification protocol support (without auth)
 
 ## [0.1.1] - 2.7.2020
 ### Added
