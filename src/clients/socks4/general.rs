@@ -50,7 +50,7 @@ impl ProxyConstructor for Socks4General {
     type Stream = TcpStream;
     type ErrorKind = ErrorKind;
 
-    async fn connect(self, mut stream: Self::Stream)
+    async fn connect(&mut self, mut stream: Self::Stream)
         -> Result<Self::ProxyStream, Self::ErrorKind>
     {
         // Computing the Socks4 buffer length.

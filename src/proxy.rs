@@ -17,7 +17,7 @@ pub trait ProxyConstructor {
     /// establishes a proxixied connection on the stream
     /// and returns the proxy stream if the connection was
     /// successful, unless an error
-    async fn connect(self, stream: Self::Stream)
+    async fn connect(&mut self, stream: Self::Stream)
         -> Result<Self::ProxyStream, Self::ErrorKind>
     where
         Self: Sized;

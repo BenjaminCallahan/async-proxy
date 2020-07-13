@@ -40,8 +40,8 @@ async fn main() {
     // Creating the socks5 constructor,
     // using which we will establish a connection
     // through proxy
-    let socks5_proxy = TcpNoAuth::new(Destination::Ipv4Addr(dest_ipaddr),
-                                      DEST_PORT, timeouts);
+    let mut socks5_proxy = TcpNoAuth::new(Destination::Ipv4Addr(dest_ipaddr),
+                                          DEST_PORT, timeouts);
 
     // Printing out information that we are starting
     // a connection to the Socks5 proxy server

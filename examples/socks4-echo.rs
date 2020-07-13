@@ -126,9 +126,9 @@ async fn main() {
     // Creating the socks4 constructor,
     // using which we will establish a connection
     // through proxy
-    let socks4_proxy = Socks4General::new(destination.parse().unwrap(),
-                                          ident,
-                                          timeouts);
+    let mut socks4_proxy = Socks4General::new(destination.parse().unwrap(),
+                                              ident,
+                                              timeouts);
 
     // Printing out information that we are starting
     // a connection to the Socks4 proxy server

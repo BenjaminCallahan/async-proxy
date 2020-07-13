@@ -114,7 +114,7 @@ impl ProxyConstructor for TcpNoAuth {
     type ProxyStream = TcpNoAuthStream;
     type ErrorKind = ErrorKind;
 
-    async fn connect(self, mut stream: Self::Stream)
+    async fn connect(&mut self, mut stream: Self::Stream)
         -> Result<Self::ProxyStream, Self::ErrorKind>
     {
         // The length of the initial Socks5 request's buffer

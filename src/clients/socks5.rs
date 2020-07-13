@@ -56,7 +56,7 @@ impl Destination {
     ///     is totally okay in most of cases, but the function is not even
     ///     `pub(crate)`, so the choice is obvious
     ///
-    fn extend_buffer(self, buf: &mut [u8])
+    fn extend_buffer(&mut self, buf: &mut [u8])
         -> Result<(), ()>
     {
         match self {
@@ -69,7 +69,7 @@ impl Destination {
                 // Then we need represent the IPv4
                 // address as a buffer (in the network byte order)
                 // and copy it to our buffer `buf`
-                BigEndian::write_u32(&mut buf[1..5], addr.into());
+                BigEndian::write_u32(&mut buf[1..5], addr.clone().into());
             },
             Destination::DomainName(name) => {
                 // If the destination is a domain name, then
@@ -105,7 +105,7 @@ impl Destination {
                 // Then we need represent the IPv4
                 // address as a buffer (in the network byte order)
                 // and copy it to our buffer `buf`
-                BigEndian::write_u128(&mut buf[1..17], addr.into());
+                BigEndian::write_u128(&mut buf[1..17], addr.clone().into());
             }
         }
 

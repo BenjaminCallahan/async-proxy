@@ -33,7 +33,7 @@ async fn main() {
     // Creating the socks4 constructor,
     // using which we will establish a connection
     // through proxy
-    let socks4_proxy = Socks4NoIdent::new(dest_addr, timeouts);
+    let mut socks4_proxy = Socks4NoIdent::new(dest_addr, timeouts);
 
     // Printing out information that we are starting
     // a connection to the Socks4 proxy server
