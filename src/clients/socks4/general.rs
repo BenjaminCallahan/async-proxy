@@ -9,6 +9,7 @@ use tokio::time::timeout;
 use std::pin::Pin;
 use core::task::{Poll, Context};
 use std::net::SocketAddrV4;
+use std::str::FromStr;
 use std::borrow::Cow;
 use std::io;
 
@@ -26,6 +27,23 @@ pub struct Socks4General {
     timeouts: ConnectionTimeouts
 }
 
+/// Represents an error that
+/// can occur during `from_str`
+/// parsing
+#[derive(Debug)]
+pub enum StrParsingError {
+    /// Indicates that the string is not
+    /// formatted appropriately for parsing
+    /// process
+    SyntaxError,
+    /// Indicates that a destination
+    /// address cannot be parsed
+    InvalidAddr,
+    /// Indicates that timeouts
+    /// cannot be parsed
+    InvalidTimeouts,
+}
+
 /// The actual type that represents
 /// the Socks4 proxy client stream.
 /// Contains a tcp stream that operates on
@@ -37,10 +55,38 @@ pub struct S4GeneralStream {
 
 impl Socks4General {
     pub fn new(dest_addr: SocketAddrV4, ident: Cow<'static, str>,
-               timeouts: ConnectionTimeouts)
-        -> Socks4General
+    timeouts: ConnectionTimeouts)
+    -> Socks4General
     {
         Socks4General { dest_addr, ident, timeouts }
+    }
+}
+
+/// Impl for parsing a `Socks4General`
+/// from a string
+impl FromStr for Socks4General {
+    type Err = StrParsingError;
+
+    /// Parses a `Socks4General` from a
+    /// string in format:
+    ///   ipv4:port ident timeouts
+    fn from_str(s: &str) -> Result<Socks4General, Self::Err> {
+        // Splitting the string on spaces
+        let mut s = s.split(" ");
+
+        // Parsing an address and timeouts
+        let (address, ident, timeouts) = (s.next()
+                                           .ok_or(StrParsingError::SyntaxError)?
+                                           .parse::<SocketAddrV4>()
+                                           .map_err(|_| StrParsingError::InvalidAddr)?,
+                                          s.next()
+                                           .ok_or(StrParsingError::SyntaxError)?,
+                                          s.next()
+                                           .ok_or(StrParsingError::SyntaxError)?
+                                           .parse::<ConnectionTimeouts>()
+                                           .map_err(|_| StrParsingError::InvalidTimeouts)?);
+
+        Ok(Socks4General::new(address, Cow::Owned(ident.to_owned()), timeouts))
     }
 }
 

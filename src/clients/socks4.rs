@@ -8,6 +8,9 @@ pub mod general;
 /// connection
 pub mod no_ident;
 
+pub use general::Socks4General;
+pub use no_ident::Socks4NoIdent;
+
 /// Represents a Socks4 protocol command
 #[repr(u8)]
 pub enum Command {

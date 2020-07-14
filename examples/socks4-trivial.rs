@@ -34,6 +34,8 @@ async fn main() {
     // using which we will establish a connection
     // through proxy
     let mut socks4_proxy = Socks4NoIdent::new(dest_addr, timeouts);
+    // Or this way:
+    //  let mut socks4_proxy: Socks4NoIdent = "52.20.16.20:30000 8000:8000:8000".parse().unwrap();
 
     // Printing out information that we are starting
     // a connection to the Socks4 proxy server

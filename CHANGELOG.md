@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.3] - 14.7.2020
+### Changed
+ - Some basic design improvements (now `ConnectionTimeouts` implements `Clone`, for instance)
+
 ## [0.2.2] - 13.7.2020
 ### Changed
  - A little reform of design was applied such that `ProxyConstructor::connect` now takes

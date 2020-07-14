@@ -9,6 +9,7 @@ use tokio::time::timeout;
 use std::pin::Pin;
 use core::task::{Poll, Context};
 use std::net::SocketAddrV4;
+use std::str::FromStr;
 use std::io;
 
 /// Parameters required by this Socks4
@@ -19,6 +20,23 @@ pub struct Socks4NoIdent {
     dest_addr: SocketAddrV4,
     /// The timeout set
     timeouts: ConnectionTimeouts
+}
+
+/// Represents an error that
+/// can occur during `from_str`
+/// parsing
+#[derive(Debug)]
+pub enum StrParsingError {
+    /// Indicates that the string is not
+    /// formatted appropriately for parsing
+    /// process
+    SyntaxError,
+    /// Indicates that a destination
+    /// address cannot be parsed
+    InvalidAddr,
+    /// Indicates that timeouts
+    /// cannot be parsed
+    InvalidTimeouts
 }
 
 /// The actual type that represents
@@ -35,6 +53,32 @@ impl Socks4NoIdent {
         -> Socks4NoIdent
     {
         Socks4NoIdent { dest_addr, timeouts }
+    }
+}
+
+/// Impl for parsing a `Socks4General`
+/// from a string
+impl FromStr for Socks4NoIdent {
+    type Err = StrParsingError;
+
+    /// Parses a `Socks4General` from a
+    /// string in format:
+    ///   ipv4:port timeouts 
+    fn from_str(s: &str) -> Result<Socks4NoIdent, Self::Err> {
+        // Splitting the string on spaces
+        let mut s = s.split(" ");
+
+        // Parsing an address and timeouts
+        let (address, timeouts) = (s.next()
+                                    .ok_or(StrParsingError::SyntaxError)?
+                                    .parse::<SocketAddrV4>()
+                                    .map_err(|_| StrParsingError::InvalidAddr)?,
+                                   s.next()
+                                    .ok_or(StrParsingError::SyntaxError)?
+                                    .parse::<ConnectionTimeouts>()
+                                    .map_err(|_| StrParsingError::InvalidTimeouts)?);
+
+        Ok(Socks4NoIdent::new(address, timeouts))
     }
 }
 

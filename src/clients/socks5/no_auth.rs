@@ -7,6 +7,7 @@ use tokio::net::TcpStream;
 use tokio::time::timeout;
 use core::task::{Poll, Context};
 use byteorder::{ByteOrder, BigEndian};
+use std::str::FromStr;
 use std::pin::Pin;
 use std::fmt;
 use std::io;
@@ -72,6 +73,26 @@ pub enum ErrorKind {
     DestinationNotSupported
 }
 
+/// Represents an error that
+/// can occur during `from_str`
+/// parsing
+#[derive(Debug)]
+pub enum StrParsingError {
+    /// Indicates that the string is not
+    /// formatted appropriately for parsing
+    /// process
+    SyntaxError,
+    /// Indicates that a destination
+    /// address cannot be parsed
+    InvalidDestination,
+    /// Indicates that a port (u16)
+    /// is invalid and it is unable to parse it
+    InvalidPort,
+    /// Indicates that timeouts
+    /// cannot be parsed
+    InvalidTimeouts
+}
+
 /// Represents the socks5-tcp 
 /// proxy client stream implementation
 pub struct TcpNoAuthStream {
@@ -85,6 +106,36 @@ impl TcpNoAuth {
         -> TcpNoAuth
     {
         TcpNoAuth { destination, port, timeouts }
+    }
+}
+
+/// Impl for parsing a `Socks4General`
+/// from a string
+impl FromStr for TcpNoAuth {
+    type Err = StrParsingError;
+
+    /// Parses a `Socks4General` from a
+    /// string in format:
+    ///   (ipv4 or ipv6 or domain.com) port timeouts 
+    fn from_str(s: &str) -> Result<TcpNoAuth, Self::Err> {
+        // Splitting the string on spaces
+        let mut s = s.split(" ");
+
+        // Parsing an address and timeouts
+        let (destination, port, timeouts) = (s.next()
+                                                .ok_or(StrParsingError::SyntaxError)?
+                                                .parse::<socks5::Destination>()
+                                                .map_err(|_| StrParsingError::InvalidDestination)?,
+                                             s.next()
+                                                .ok_or(StrParsingError::SyntaxError)?
+                                                .parse::<u16>()
+                                                .map_err(|_| StrParsingError::InvalidPort)?,
+                                             s.next()
+                                                .ok_or(StrParsingError::SyntaxError)?
+                                                .parse::<ConnectionTimeouts>()
+                                                .map_err(|_| StrParsingError::InvalidTimeouts)?);
+
+        Ok(TcpNoAuth::new(destination, port, timeouts))
     }
 }
 

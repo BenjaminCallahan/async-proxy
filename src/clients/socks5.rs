@@ -1,4 +1,7 @@
 use byteorder::{ByteOrder, BigEndian};
+use std::borrow::Cow;
+use std::str::FromStr;
+use std::net;
 
 /// Module contains implementation of
 /// the socks5 proxification protocol
@@ -6,6 +9,8 @@ use byteorder::{ByteOrder, BigEndian};
 /// when establishing a connection
 /// between a client and a socks5 server
 pub mod no_auth;
+
+pub use no_auth::TcpNoAuth;
 
 /// The Socks5 protocol command representation
 #[repr(C)]
@@ -25,7 +30,7 @@ pub enum Destination {
     /// Represents an IPv4 address
     Ipv4Addr(std::net::Ipv4Addr),
     /// Represents a domain name
-    DomainName(std::borrow::Cow<'static, str>),
+    DomainName(Cow<'static, str>),
     /// Represents an IPv6 address
     Ipv6Addr(std::net::Ipv6Addr)
 }
@@ -110,5 +115,43 @@ impl Destination {
         }
 
         Ok(())
+    }
+}
+
+impl FromStr for Destination {
+    type Err = ();
+
+    /// Parses a socks5 destination.
+    /// The parsing algorithm is simpler than
+    /// you can think of:
+    ///     At first, it tries to parse an IPv4
+    ///     from the string.
+    ///     If succeed, returns an IPv4 destination representation,
+    ///     If not, it tries to parse an IPv6
+    ///     from the string.
+    ///     Then, if succeed, returns an IPv6 destination representation.
+    ///     Finally, if not, it tries to parse a domain name
+    ///     from the string and returns a domain name destination
+    ///     if succeed, unless `Err`
+    fn from_str(s: &str) -> Result<Destination, Self::Err> {
+        // Trying to parse an ipv4 address from the string
+        // (Actually, not the best code, but better that
+        //  multiple calls of `.map` or nested matched for ex.)
+        let result = s.parse::<net::Ipv4Addr>();
+        if result.is_ok() { 
+            return Ok(Destination::Ipv4Addr(result.unwrap()))
+        }
+       
+        // Trying to parse an IPv6 address from the string
+        let result = s.parse::<net::Ipv6Addr>();
+        if result.is_ok() { 
+            return Ok(Destination::Ipv6Addr(result.unwrap()))
+        }
+
+        // Parsing a domain name from the string
+        let domain_name = s.parse::<addr::DomainName>()
+                           .map_err(|_| ())?;
+
+        Ok(Destination::DomainName(Cow::Owned(domain_name.as_str().to_owned())))
     }
 }
