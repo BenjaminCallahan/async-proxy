@@ -148,10 +148,10 @@ impl FromStr for Destination {
             return Ok(Destination::Ipv6Addr(result.unwrap()))
         }
 
-        // Parsing a domain name from the string
-        let domain_name = s.parse::<addr::DomainName>()
+        // Trying to parse a domain name
+        webpki::DNSNameRef::try_from_ascii_str(s)
                            .map_err(|_| ())?;
 
-        Ok(Destination::DomainName(Cow::Owned(domain_name.as_str().to_owned())))
+        Ok(Destination::DomainName(Cow::Owned(s.to_owned())))
     }
 }

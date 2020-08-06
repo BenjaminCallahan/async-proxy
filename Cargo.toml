@@ -1,6 +1,6 @@
 [package]
 name = "async-proxy"
-version = "0.2.3"
+version = "0.2.4"
 authors = ["TonyGraim <tonygraim@gmail.com>"]
 edition = "2018"
 description = "An asyncronous implementation of proxy clients"
@@ -10,7 +10,7 @@ repository = "https://github.com/TonyGraim/async-proxy"
 [dependencies]
 async-trait = "0.1"
 byteorder = "1.3.4"
-addr = "0.2.0"
+webpki = "0.21.3"
 
 [dependencies.tokio]
 version = "0.2"
