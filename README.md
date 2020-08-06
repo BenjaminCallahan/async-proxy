@@ -1,6 +1,7 @@
 # async-proxy: fast proxy clients implementation
 Async proxy is a fast and flexible, as well as asyncronous implementation of proxy clients in the Rust programming language
 
+![rs-build](https://github.com/TonyGraim/async-proxy/workflows/rs-build/badge.svg?branch=develop)
 ![crates.io](https://img.shields.io/crates/v/async-proxy.svg)
 ![License](https://img.shields.io/github/license/TonyGraim/async-proxy)
 ![Version](https://img.shields.io/badge/version-v0.2.4-blue)
