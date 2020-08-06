@@ -1,4 +1,4 @@
-name: Rust
+name: rs-build
 
 on:
   push:
