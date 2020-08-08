@@ -4,12 +4,12 @@ Async proxy is a fast and flexible, as well as asyncronous implementation of pro
 ![rs-build](https://github.com/TonyGraim/async-proxy/workflows/rs-build/badge.svg?branch=develop)
 ![crates.io](https://img.shields.io/crates/v/async-proxy.svg)
 ![License](https://img.shields.io/github/license/TonyGraim/async-proxy)
-![Version](https://img.shields.io/badge/version-v0.2.4-blue)
+![Version](https://img.shields.io/badge/version-v0.2.5-blue)
 
 ## Getting started
 Add the line below in your `Cargo.toml` file
 ```
-async-proxy = "0.2.4"
+async-proxy = "0.2.5"
 ```
 
 ## Protocols
