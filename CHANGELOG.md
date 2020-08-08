@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.5] - 8.8.2020
+### Added
+ - Now `Socks` tcp-based proxy clients implement the trait `Into<tokio::net::TcpStream>`
+
 ## [0.2.4] - 6.8.2020
 ### Fixed
  - Fix problems with docs caused by the crate [`addr`](https://github.com/addr-rs/addr/issues/6)
