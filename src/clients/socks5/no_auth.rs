@@ -321,3 +321,9 @@ impl AsyncWrite for TcpNoAuthStream {
         Pin::new(stream).poll_shutdown(cx)
     }
 }
+
+impl Into<TcpStream> for TcpNoAuthStream {
+    fn into(self) -> TcpStream {
+        self.wrapped_stream
+    }
+}

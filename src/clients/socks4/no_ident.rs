@@ -204,3 +204,9 @@ impl AsyncWrite for S4NoIdentStream {
         Pin::new(stream).poll_shutdown(cx)
     }
 }
+
+impl Into<TcpStream> for S4NoIdentStream {
+    fn into(self) -> TcpStream {
+        self.wrapped_stream
+    }
+}

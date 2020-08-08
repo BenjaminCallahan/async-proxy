@@ -212,3 +212,9 @@ impl AsyncWrite for S4GeneralStream {
         Pin::new(stream).poll_shutdown(cx)
     }
 }
+
+impl Into<TcpStream> for S4GeneralStream {
+    fn into(self) -> TcpStream {
+        self.wrapped_stream
+    }
+}
