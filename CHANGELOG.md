@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.4] - 6.8.2020
+### Fixed
+ - Fix problems with docs caused by the crate [`addr`](https://github.com/addr-rs/addr/issues/6)
+
 ## [0.2.3] - 14.7.2020
 ### Changed
  - Some basic design improvements (now `ConnectionTimeouts` implements `Clone`, for instance)
