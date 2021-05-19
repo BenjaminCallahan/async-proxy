@@ -171,6 +171,14 @@ impl ProxyConstructor for Socks4NoIdent {
             _ => Err(ErrorKind::BadBuffer)
         }
     }
+
+    async fn send_payload(
+        &self,
+        buf: &mut Vec<u8>,
+        stream: &mut Self::Stream,
+    ) -> Result<usize, Self::ErrorKind> {
+        todo!()
+    }
 }
 
 impl AsyncRead for S4NoIdentStream {
