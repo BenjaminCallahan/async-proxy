@@ -15,7 +15,7 @@ async-proxy = "0.2.5"
 ## Protocols
 The library supports these protocols
 * SOCKS4 (Stable)
-* SOCKS5 (Without auth, stable)
+* SOCKS5 (With Username/Password auth)
 * HTTP(s) (Working on, WIP)
 
 

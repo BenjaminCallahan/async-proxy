@@ -21,6 +21,7 @@ pub enum Command {
 /// Represents a Socks4 protocol error
 /// that can occur when connecting to
 /// a destination
+#[derive(Debug)]
 pub enum ErrorKind {
     /// Indicates that an error occured
     /// during a native I/O operation,
