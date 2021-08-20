@@ -1,17 +1,17 @@
+use crate::clients::socks4::{Command, ErrorKind};
 use crate::general::ConnectionTimeouts;
 use crate::proxy::ProxyConstructor;
-use crate::clients::socks4::{ErrorKind, Command};
-use byteorder::{ByteOrder, BigEndian};
-use tokio::net::TcpStream;
-use tokio::io::{AsyncRead, AsyncWrite};
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tokio::time::timeout;
-use std::pin::Pin;
-use core::task::{Poll, Context};
-use std::net::SocketAddrV4;
-use std::str::FromStr;
+use byteorder::{BigEndian, ByteOrder};
+use core::task::{Context, Poll};
 use std::borrow::Cow;
 use std::io;
+use std::net::SocketAddrV4;
+use std::pin::Pin;
+use std::str::FromStr;
+use tokio::io::{AsyncRead, AsyncWrite};
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::net::TcpStream;
+use tokio::time::timeout;
 
 /// Represents the proxy constructor
 /// that creates a `S4GeneralStream`
@@ -24,7 +24,7 @@ pub struct Socks4General {
     ///  for more information)
     ident: Cow<'static, str>,
     /// The timeout set
-    timeouts: ConnectionTimeouts
+    timeouts: ConnectionTimeouts,
 }
 
 /// Represents an error that
@@ -50,15 +50,20 @@ pub enum StrParsingError {
 pub struct S4GeneralStream {
     /// The tcp stream on which
     /// the client operates on
-    wrapped_stream: TcpStream
+    wrapped_stream: TcpStream,
 }
 
 impl Socks4General {
-    pub fn new(dest_addr: SocketAddrV4, ident: Cow<'static, str>,
-    timeouts: ConnectionTimeouts)
-    -> Socks4General
-    {
-        Socks4General { dest_addr, ident, timeouts }
+    pub fn new(
+        dest_addr: SocketAddrV4,
+        ident: Cow<'static, str>,
+        timeouts: ConnectionTimeouts,
+    ) -> Socks4General {
+        Socks4General {
+            dest_addr,
+            ident,
+            timeouts,
+        }
     }
 }
 
@@ -75,18 +80,23 @@ impl FromStr for Socks4General {
         let mut s = s.split(" ");
 
         // Parsing an address and timeouts
-        let (address, ident, timeouts) = (s.next()
-                                           .ok_or(StrParsingError::SyntaxError)?
-                                           .parse::<SocketAddrV4>()
-                                           .map_err(|_| StrParsingError::InvalidAddr)?,
-                                          s.next()
-                                           .ok_or(StrParsingError::SyntaxError)?,
-                                          s.next()
-                                           .ok_or(StrParsingError::SyntaxError)?
-                                           .parse::<ConnectionTimeouts>()
-                                           .map_err(|_| StrParsingError::InvalidTimeouts)?);
+        let (address, ident, timeouts) = (
+            s.next()
+                .ok_or(StrParsingError::SyntaxError)?
+                .parse::<SocketAddrV4>()
+                .map_err(|_| StrParsingError::InvalidAddr)?,
+            s.next().ok_or(StrParsingError::SyntaxError)?,
+            s.next()
+                .ok_or(StrParsingError::SyntaxError)?
+                .parse::<ConnectionTimeouts>()
+                .map_err(|_| StrParsingError::InvalidTimeouts)?,
+        );
 
-        Ok(Socks4General::new(address, Cow::Owned(ident.to_owned()), timeouts))
+        Ok(Socks4General::new(
+            address,
+            Cow::Owned(ident.to_owned()),
+            timeouts,
+        ))
     }
 }
 
@@ -96,9 +106,10 @@ impl ProxyConstructor for Socks4General {
     type Stream = TcpStream;
     type ErrorKind = ErrorKind;
 
-    async fn connect(&mut self, mut stream: Self::Stream)
-        -> Result<Self::ProxyStream, Self::ErrorKind>
-    {
+    async fn connect(
+        &mut self,
+        mut stream: Self::Stream,
+    ) -> Result<Self::ProxyStream, Self::ErrorKind> {
         // Computing the Socks4 buffer length.
         // The buffer length is computed this way:
         //  (+1) for the number of the version of the socks protocol (4 in this case)
@@ -117,7 +128,7 @@ impl ProxyConstructor for Socks4General {
 
         // Pusing the tcp connection establishment command
         buf.push(Command::TcpConnectionEstablishment as u8);
-        
+
         // Filling the port buffer with zeroes
         // due to that fact that it is permitted
         // to access an initialized memory
@@ -144,22 +155,14 @@ impl ProxyConstructor for Socks4General {
 
         // Sending our generated payload
         // to the Socks4 server
-        let future = stream.write_all(&buf);
-        let future = timeout(self.timeouts.write_timeout, future);
-        let _ = future.await.map_err(|_| ErrorKind::OperationTimeoutReached)?
-                            .map_err(|e| ErrorKind::IOError(e))?;
-
-        // Reading a reply from the server
-        let future = stream.read(&mut buf);
-        let future = timeout(self.timeouts.read_timeout, future);
-        let read_bytes = future.await.map_err(|_| ErrorKind::OperationTimeoutReached)?
-                                     .map_err(|e| ErrorKind::IOError(e))?;
+        let read_bytes = self.send_payload(&mut buf, &mut stream).await.unwrap();
+     
 
         // We should receive exatly 8 bytes from the server,
         // unless there is something wrong with the
         // received reply
         if read_bytes != 8 {
-            return Err(ErrorKind::BadBuffer)
+            return Err(ErrorKind::BadBuffer);
         }
 
         // Analyzing the received reply
@@ -167,7 +170,9 @@ impl ProxyConstructor for Socks4General {
         // instance if everything was successful
         match buf[1] {
             // Means that request accepted
-            0x5a => Ok(S4GeneralStream { wrapped_stream: stream }),
+            0x5a => Ok(S4GeneralStream {
+                wrapped_stream: stream,
+            }),
             // Means that our request was denied
             0x5b => Err(ErrorKind::RequestDenied),
             // Means that ident is currently unavailable
@@ -176,38 +181,62 @@ impl ProxyConstructor for Socks4General {
             0x5d => Err(ErrorKind::BadIdent),
             // Does not match anything, means that
             // we got a bad buffer
-            _ => Err(ErrorKind::BadBuffer)
+            _ => Err(ErrorKind::BadBuffer),
         }
+    }
+
+    async fn send_payload(
+        &self,
+        buf: &mut Vec<u8>,
+        stream: &mut Self::Stream,
+    ) -> Result<usize, Self::ErrorKind> {
+        // Writing the initial payload to the server
+        let future = stream.write_all(&buf);
+        let future = timeout(self.timeouts.write_timeout, future);
+        let _ = future
+            .await
+            .map_err(|_| ErrorKind::OperationTimeoutReached)?
+            .map_err(|e| ErrorKind::IOError(e))?;
+
+        // Reading a reply from the server
+        let future = stream.read(buf);
+        let future = timeout(self.timeouts.read_timeout, future);
+        let read_bytes = future
+            .await
+            .map_err(|_| ErrorKind::OperationTimeoutReached)?
+            .map_err(|e| ErrorKind::IOError(e))?;
+
+        Ok(read_bytes)
     }
 }
 
 impl AsyncRead for S4GeneralStream {
-    fn poll_read(self: Pin<&mut Self>, cx: &mut Context<'_>, buf: &mut [u8])
-        -> Poll<io::Result<usize>>
-    {
+    fn poll_read(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+        buf: &mut [u8],
+    ) -> Poll<io::Result<usize>> {
         let pinned = &mut Pin::into_inner(self).wrapped_stream;
         Pin::new(pinned).poll_read(cx, buf)
     }
 }
 
 impl AsyncWrite for S4GeneralStream {
-    fn poll_write(self: Pin<&mut Self>, cx: &mut Context<'_>, buf: &[u8])
-        -> Poll<Result<usize, io::Error>>
-    { 
+    fn poll_write(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+        buf: &[u8],
+    ) -> Poll<Result<usize, io::Error>> {
         let stream = &mut Pin::into_inner(self).wrapped_stream;
         Pin::new(stream).poll_write(cx, buf)
     }
 
-    fn poll_flush(self: Pin<&mut Self>, cx: &mut Context<'_>)
-        -> Poll<Result<(), io::Error>>
-    {
+    fn poll_flush(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<(), io::Error>> {
         let stream = &mut Pin::into_inner(self).wrapped_stream;
         Pin::new(stream).poll_flush(cx)
     }
 
-    fn poll_shutdown(self: Pin<&mut Self>, cx: &mut Context<'_>)
-        -> Poll<Result<(), io::Error>>
-    {
+    fn poll_shutdown(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<(), io::Error>> {
         let stream = &mut Pin::into_inner(self).wrapped_stream;
         Pin::new(stream).poll_shutdown(cx)
     }
