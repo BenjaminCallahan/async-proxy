@@ -155,6 +155,7 @@ impl<'a> TcpNoAuth<'a> {
         }
     }
 
+    /// Uses `Username/Password` method for authentication
     pub fn with_authentication(&mut self, username: &'a str, password: &'a str) {
         self.auth = AuthenticationKind::UsernamePassword { username, password };
     }
